@@ -1,6 +1,6 @@
 ### 1. 创建型模式
 
-创建型模式关注的是对象创建的过程, 有单例模式, 工厂模式, 建造者模式, 原型模式
+创建型模式关注的是对象创建的过程, 有单例模式, 工厂模式, 生成器模式, 原型模式
 
 #### 1. 单例模式
 
@@ -678,7 +678,9 @@ public class FactoryMethod {
 - 抽象工厂模式是可以生产多个产品
 - 工厂方法模式则只能生产一个产品
 
-抽象工厂模式的主要角色如下:
+
+
+抽象工厂模式构成要素:
 
 1. 抽象工厂 `Abstract Factory` : 提供了创建产品的接口, 它包含多个创建产品的方法 `createProduct()`, 可以创建多个不同等级/种类的产品
 2. 具体工厂 `Concrete Factory` : 主要是实现抽象工厂中的多个抽象方法, 完成具体产品的创建
@@ -816,11 +818,210 @@ public class FactoryMethod {
 
 
 
-#### 4. 建造者模式
+#### 4. 生成器模式
+
+生成器模式 `Builder Pattern` : 又名**建造者模式**, 它可以将一个**复杂的对象**的建造过程抽象出来, **将复杂的对象的构建与它的表示分离**, 使同样的构建过程可以创建不同的表示
+
+生成器模式的本质:
+
+- 分离了对象子组件的单独构造(由 `Builder` 来负责) 和装配 (由 `Director` 负责), 从而可以构造出复杂的对象, 这个模式适用于某个对象构建过程复杂的情况, 实现了构建和装配的解耦
+
+- 不同的生成器, 相同的装配, 也可以构建出不同的对象; 
+
+  相同的生成器, 不同的装配顺序, 也可以构建出不同的对象;
+
+  通过这种形式实现了构建算法, 装配算法的解耦, 实现了更好的复用
+
+生成器模式和抽象工厂模式的区别: 在生成器模式里, 有个指挥者 `Director`, 由指挥者来管理生成器 `Builder`, 用户是与指挥者联系的, 生成器用于创建产品 (复杂对象), 指挥者联系生成器最后生产得到产品
+
+生成器模式构成要素:
+
+1. 产品角色 `Product` : 具体生成器要构建的复杂对象
+
+2. 抽象生成器 `Abstruct Builder` : 抽象生成器是一个接口, 包含创建产品各个子部件的抽象方法, 通常还包含一个返回复杂产品 `Product` 的方法 `Product getResult()`
+
+3. 具体生成器 `Concrete Builder` : 具体生成器, 实现 `Builder` 接口, 负责生成复杂对象, 完成复杂产品的各个部件的创建
+
+4. 指挥者 `Director` : 或者说装配者, 它是一个类, 需要含有 `Builder` 接口声明的变量
+   
+   它的职责是负责向用户提供具体的生成器, 即指挥者将请求具体生成器 `Concrete Builder` 来构造用户所需要的 `Product` 对象, 如果所请求的具体生成器成功地构造出 `Product` 对象向, 指挥者就可以让该具体生成器返回所构造的 `Product` 对象
+   
+   指挥者有两个作用:
+   
+   - 隔离了客户 `Client` 与对象的生产过程
+   - 负责控制产品对象的生产过程
+
+![生成器模式结构](static/生成器模式结构.png)
+
+> 产品类, 是一个复杂的对象
+
+```Java
+public class Human {				// 是一个复杂的对象
+  private String head;
+  private String body;
+  private String hand;
+  private String foot;
+  public String getHead() {
+    return head;
+  }
+  public void setHead(String head) {
+    this.head = head;
+  }
+  public String getBody() {
+    return body;
+  }
+  public void setBody(String body) {
+    this.body = body;
+  }
+  public String getHand() {
+    return hand;
+  }
+  public void setHand(String hand) {
+    this.hand = hand;
+  }
+  public String getFoot() {
+    return foot;
+  }
+  public void setFoot(String foot) {
+    this.foot = foot;
+  }
+  @Override
+  public String toString() {
+    return "Human{" +
+        "head='" + head + '\'' +
+        ", body='" + body + '\'' +
+        ", hand='" + hand + '\'' +
+        ", foot='" + foot + '\'' +
+        '}';
+  }
+}
+```
+
+> 抽象生产器, 定义了构建产品的一些通用的方法
+
+```Java
+public interface HumanBuilder {
+  void buildHead();
+  void buildBody();
+  void buildHand();
+  void buildFoot();
+  Human getResult();
+}
+```
+
+> 具体生产者, 实现了 `Builder` 接口, 负责生成复杂对象, 完成复杂产品的各个部件的创建
+>
+> `HumanBuilderBrown` 略
+
+```Java
+public class HumanBuilderYellow implements HumanBuilder {
+  private Human human;
+  public HumanBuilderYellow() {
+    this.human = new Human();
+  }
+  @Override
+  public void buildHead() {
+    human.setHead("黑头发");
+  }
+  @Override
+  public void buildBody() {
+    human.setBody("黄皮肤");
+  }
+  @Override
+  public void buildHand() {
+    human.setHand("洁白的手");
+  }
+  @Override
+  public void buildFoot() {
+    human.setFoot("大长腿");
+  }
+  @Override
+  public Human getResult() {
+    return human;
+  }
+}
+```
+
+> 指挥者, 用于指导生产组装产品
+
+```Java
+public class HumanDirector {
+  private HumanBuilder builder;
+  public HumanDirector(HumanBuilder builder) {
+    this.builder = builder;
+  }
+  public Human humanDirect() {
+    builder.buildHead();
+    builder.buildBody();
+    builder.buildHand();
+    builder.buildFoot();
+    return builder.getResult();
+  }
+}
+```
+
+> 客户端, 通过指挥者 `Director`, 隔离了创建对象的过程, 创建对象交给 `Builder` 去做, 指挥者只负责生产对象
+
+```Java
+public class HumanClient {
+  public static void main(String[] args) {
+    HumanDirector yellowDir = new HumanDirector(new HumanBuilderYellow()),
+                  brownDir = new HumanDirector(new HumanBuilderBrown());
+    Human theYellow = yellowDir.humanDirect(),    
+        theBrown = brownDir.humanDirect();        
+    System.out.println(theYellow);      // Human{head='黑头发', body='黄皮肤', hand='洁白的手', foot='大长腿'}
+    System.out.println(theBrown);       // Human{head='金头发', body='黑皮肤', hand='短手', foot='短脚'}
+  }
+}
+```
+
+
+
+生成器模式的优点:
+
+- 客户端不必知道产品内部组成的细节
+
+  生成器模式将复杂对象的构造过程( `Concrete Builder` )与创建过程 (`Director`) 创建过程解耦, 使得相同的创建过程可以创建不同的产品对象
+
+  只需要指定具体的生成器就能生成特定的对象, 隐藏类的内部结构
+
+- 各一个具体的生成器 `Builder` 相对独立
+
+  每一个具体生成器与其他的具体生成器无关, 因此可以很方便地替换具体生成器, 或者增加新的具体生成器, 使得用户可以使用不同的具体生成器即可得到不同的产品对象
+
+- 可以更加精细地控制产品的创建过程
+
+  生成器模式将复杂的产品的创建步骤分解在不同的方法中, 允许对象通过几个步骤来创建, 并且可以改变过程, 使得对象的创建过程更加清晰, 也更方便使用程序来控制创建的过程
+
+- 增加新的具体生成器时, 无须修改原有的代码, 符合开闭原则
+
+生成器模式的缺点:
+
+1. 产品之间差异性很大
+
+   生成器模式所创建的产品一般具有较多的共同点, 其组成部分相似, 如果产品之间的差异性很大, 则不适合使用生成器模式, 因此其使用范围受到一定的限制
+
+2. 产品内部很复杂
+
+   如果产品的内部变化复杂, 可能会导致需要定义很多具体生成器类来实现这种变化, 导致系统变得非常庞大
+
+
+
+生成器模式和抽象工厂模式在功能上非常相似, 主要区别在:
+
+- 抽象工厂模式实现最产品家族的创建, 一个产品家族是一系列的产品, 具有不同分类维度的产品组合
+
+  它不需要关心构建过程, 只需要关心产品由什么工厂生产即可
+
+- 生成器模式一半用于创建大的复杂的对象. 强调的是一步步创建对象, 可以改变步骤来生成不同的对象
+
+  一般来说生成器模式中的对象不直接返回
 
 
 
 #### 5. 原型模式
+
+
 
 ### 2. 结构型模式
 
